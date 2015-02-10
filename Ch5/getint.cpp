@@ -47,6 +47,42 @@ int getint(int *pn) {
   return c;
 }
 
+// NOTE(brendan): getfloat: get next float from input into *pn
+int getfloat(float *outFloat) {
+  int c, sign;
+
+  c = skipWhiteSpace();
+
+  if(!isdigit(c) && c != EOF && c != '+' && c != '-') {
+    // NOTE(brendan): it's not a number
+    ungetch(c);
+    return 0;
+  }
+
+  sign = (c == '-') ? -1 : 1;
+  if(c == '+' || c == '-') {
+    c = getch();
+    c = skipWhiteSpace();
+  }
+  for(*outFloat = 0; isdigit(c); c = getch()) {
+    *outFloat = 10.0 * *outFloat + (c - '0');
+  }
+  if(c == '.') {
+    c = getch();
+    float power;
+    for(power = 1.0; isdigit(c); c = getch()) {
+      *outFloat = 10.0 * *outFloat + (c - '0');
+      power *= 10.0;
+    }
+    *outFloat = *outFloat / power;
+  }
+  *outFloat *= sign;
+  if(c != EOF) {
+    ungetch(c);
+  }
+  return c;
+}
+
 #define BUFSIZE 100
 
 char buf[BUFSIZE];	/* buffer for ungetch */
@@ -68,8 +104,8 @@ void ungetch(int c)	{
 }
 
 int main(void) {
-  int x;
-  while(getint(&x)) {
-    printf("%d\n", x);
+  float x;
+  while(getfloat(&x)) {
+    printf("%f\n", x);
   }
 }
