@@ -1,7 +1,7 @@
 /* ========================================================================
    File: str_functions.cpp
-   Date: Feb. 12/15
-   Revision: 1
+   Date: Feb. 16/15
+   Revision: 2
    Creator: Brendan Duke
    Notice: (C) Copyright 2015 by BRD Inc. All Rights Reserved.
    This is a file containing various common C library functions on strings,
@@ -63,20 +63,55 @@ bool strend(char *s, char *t) {
   return true;
 }
 
-// TODO(brendan): strncpy, strncat, and strncmp, which operate on at most
-// the first n characters of their argument strings. E.g. strncpy(s,t,n)
-// copies at most n characters of t to s. (p. 121)
-
-// TODO(brendan): in progress
 // NOTE(brendan): copy at most n characters of string ct to s; return s.
 // Pad with '\0's if ct has fewer than n characters.
 char *strncpy(char *s, char *ct, int n) {
-  int copied = 0;
-  while((copied < n) && ((*s = *ct) != '\0'));
+  char *result = s;
+  while(((s - result) < n) && ((*s++ = *ct++) != '\0'));
+  while((s - result) < n) {
+    *s++ = '\0';
+  }
+  return result;
+}
+
+// NOTE(brendan): concatenate at most n characters of string ct to string s;
+// terminate s with '\0'; return s.
+char *strncat(char *s, char *ct, int n) {
+  char *result = s;
+  while(*s != '\0') {
+    ++s;
+  }
+  char *start = s;
+  while(((s - start) < n) && ((*s++ = *ct++) != '\0'));
+  while((s - start) < n) {
+    *s++ = '\0';
+  }
+  return result;
+}
+
+// NOTE(brendan): compare at most n characters of string cs to string ct;
+// return <0 if cs < ct, 0 if cs == ct, or >0 if cs > ct
+int strncmp(char *cs, char *ct, int n) {
+  for(int i = 0; i < n; ++i) {
+    if(*cs < *ct) {
+      return -1;
+    }
+    else if(*cs > *ct) {
+      return 1;
+    }
+    if(*cs == '\0') {
+      return 0;
+    }
+    // NOTE(brendan): *cs == *ct
+    ++cs;
+    ++ct;
+  }
+  return 0;
 }
 
 int main() {
-  char testString[] = "1234567890";
+  char testString0[MAXLINE] = "abcdeFghijklmnopqrstuvwxyz";
+  char testString1[] = "abcdefghijklmnopqrstuvwxyz";
   char strendTest[] = "567890";
-  printf("%d\n", strend(testString, strendTest));
+  printf("%d\n", strncmp(testString0, testString1, 6));
 }
