@@ -15,7 +15,7 @@
 // NOTE(brendan): max length of any input line
 #define MAXLEN 10000
 // NOTE(brendan): max number of chars in file to be sorted
-#define MAXCHAR 5000000
+#define MAXCHAR 200000
 
 // NOTE(brendan): pointers to text lines
 char *lineptr[MAXLINES];
@@ -97,10 +97,6 @@ int main(int argc, char *argv[]) {
   char lineStorage[MAXCHAR];
   // NOTE(brendan): number of input lines read
   int nlines;
-  // NOTE(brendan): profiling
-  for(int i = 0; i < 100; ++i) {
-    readlines(lineptr, lineStorage, MAXLINES);
-  }
   if((nlines = readlines(lineptr, lineStorage, MAXLINES)) >= 0) {
     qsort(lineptr, 0, nlines - 1);
     writelines(lineptr, nlines);

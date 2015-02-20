@@ -1,7 +1,7 @@
 #ifndef ALLOC_H
 #define ALLOC_H 
 // NOTE(brendan): size of available space
-#define ALLOCSIZE 10000000
+#define ALLOCSIZE 2000000000
 
 // NOTE(brendan): storage for alloc
 static char allocbuf[ALLOCSIZE];

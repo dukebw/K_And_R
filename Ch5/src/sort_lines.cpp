@@ -11,7 +11,7 @@
 #include "alloc.h"
 
 // NOTE(brendan): max #lines to be sorted
-#define MAXLINES 5000
+#define MAXLINES 5000000
 // NOTE(brendan): max length of any input line
 #define MAXLEN 10000
 
@@ -92,11 +92,6 @@ void qsort(char *v[], int left, int right) {
 int main() {
   // NOTE(brendan): number of input lines read
   int nlines;
-  // TODO(brendan): get a string from file and repeatedly pass it to this
-  // loop to do some profiling
-  for(int i = 0; i < 100; ++i) {
-    readlines(lineptr, MAXLINES);
-  }
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
     qsort(lineptr, 0, nlines - 1);
     writelines(lineptr, nlines);
