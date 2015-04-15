@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "util.h" // NOTE(brendan): swap, readlines, writelines
 
 // NOTE(brendan): max #lines to be sorted
@@ -20,8 +21,13 @@ char *lineptr[MAXLINES];
 int readlines(char *lineptr[], int nlines);
 void writelines(char *lineptr[], int nlines);
 
+static int reverse;
+static int directory;
+static int (*pSortFunction)(char *, char *) = (int (*)(char *, char *))strcmp;
+
 // NOTE(brendan): compare s1 and s2 numerically
-int numcmp(char *s1, char *s2) {
+int numcmp(char *s1, char *s2)
+{
     double v1 = atof(s1);
     double v2 = atof(s2);
     if (v1 < v2) {
@@ -35,20 +41,29 @@ int numcmp(char *s1, char *s2) {
     }
 }
 
-// NOTE(brendan): reverse of numcmp
-int reverseNumcmp(char *s1, char *s2)
+// NOTE(brendan): increment char pointer past non-space/alpha-numeric
+inline void
+moveToAlphaNumeric(char **s)
 {
-    return -numcmp(s1, s2);
+    while (!(isspace(**s) || isalnum(**s)) &&
+           (**s != '\0')) {
+        ++*s;
+    }
 }
 
-// NOTE(brendan): reverse of strcmp
-int reverseStrcmp(char *s1, char *s2)
+// NOTE(brendan): reverse of numcmp
+int reverseGFn(char *s1, char *s2)
 {
-    return -strcmp(s1, s2);
+    if (directory) {
+        moveToAlphaNumeric(&s1);
+        moveToAlphaNumeric(&s2);
+    }
+    return reverse ? -pSortFunction(s1, s2) : pSortFunction(s1, s2);
 }
 
 // NOTE(brendan): sort v[left]..v[right] into increasing order
-void qsort(void *v[], int left, int right, int (*comp)(void *, void *)) {
+void qsort(void *v[], int left, int right, int (*comp)(void *, void *))
+{
     void swap(void *v[], int, int); 
 
     // NOTE(brendan): do nothing if array contains < 2 elements
@@ -78,9 +93,10 @@ char foldCase(char c)
 }
 
 // NOTE(brendan): compare string cs to string ct;
-// return <0 if cs < ct, 0 if cs == ct, or >0 if cs > ct
+// return < 0 if cs < ct, 0 if cs == ct, or > 0 if cs > ct
 // treat upper-case and lower-case letters as equal
-int foldStrcmp(char *cs, char *ct) {
+int foldStrcmp(char *cs, char *ct)
+{
     while (true) {
         char csTemp = foldCase(*cs);
         char ctTemp = foldCase(*ct);
@@ -89,6 +105,12 @@ int foldStrcmp(char *cs, char *ct) {
         }
         else if (csTemp > ctTemp) {
             return 1;
+        }
+        else if (*cs > *ct) {
+            return 1;
+        }
+        else if (*cs < *ct) {
+            return -1;
         }
         // NOTE(brendan): *cs == *ct
         if (*cs == '\0') {
@@ -100,18 +122,18 @@ int foldStrcmp(char *cs, char *ct) {
     return 0;
 }
 
-// TODO(brendan): add the option -f to fold upper and lower case together,
-// so that case distinctions are not made during sorting; for example,
-// a and A compare equal
-// TODO(brendan): foldStrcmp should put capital 'A' before 'a'
+// TODO(brendan): Add a field-handling capability, so sorting may be done
+// on the fields within lines, each field sorted according to an independent
+// set of options. (E.g. index of book: -df for index category and -n
+// for page numbers)
 // NOTE(brendan): sort input lines
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // NOTE(brendan): number of input lines read
     int nlines;
 
-    //NOTE(brendan): 1 if numeric sort
+    // NOTE(brendan): whether to sort numerically or fold
     int numeric = 0;
-    int reverse = 0;
     int fold = 0;
     for (int argIndex = 1; argIndex < argc; ++argIndex) {
         char *argString = argv[argIndex];
@@ -133,6 +155,10 @@ int main(int argc, char *argv[]) {
                 {
                     fold = 1;
                 }   break;
+                case 'd':
+                {
+                    directory = 1;
+                }   break;
                 default:
                 {
                     printf("Invalid input -- '%c'\n", *argString);
@@ -141,16 +167,15 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    if (numeric) {
+        pSortFunction = numcmp;
+    }
+    if (fold && (pSortFunction == (int (*)(char *, char *))strcmp)) {
+        pSortFunction = foldStrcmp;
+    }
     if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-        int (*pNumcmp)(void *, void *) = 
-            reverse ? (int (*)(void *, void *))reverseNumcmp : 
-                      (int (*)(void *, void *))numcmp;
-        int (*pStrcmp)(void *, void *) =
-            reverse ? (int (*)(void *, void *))reverseStrcmp :
-                      (int (*)(void *, void *))strcmp;
-        // TODO(brendan): reverse for fold
-        pStrcmp = fold ? (int (*)(void *, void*))foldStrcmp : pStrcmp;
-        qsort((void **)lineptr, 0, nlines - 1, (numeric ?  pNumcmp : pStrcmp));
+        qsort((void **)lineptr, 0, nlines - 1, 
+              (int (*)(void *, void *))reverseGFn);
         writelines(lineptr, nlines);
         return 0;
     }
