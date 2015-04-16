@@ -15,7 +15,7 @@
 #define MAXLEN 10000
 
 // NOTE(brendan): read a line into s; return length
-int getline(char s[], int lim) {
+int GetLine(char s[], int lim) {
     int c;
 
     char *start = s;
@@ -30,11 +30,11 @@ int getline(char s[], int lim) {
 }
 
 //NOTE(brendan): read input lines
-int readlines(char *lineptr[], int maxlines) {
+int ReadLines(char *lineptr[], int maxlines) {
     int len, nlines = 0;
     char *p, line[MAXLEN];
 
-    while ((len = getline(line, MAXLEN)) > 0) {
+    while ((len = GetLine(line, MAXLEN)) > 0) {
         if (nlines >= maxlines || (p = alloc(len)) == NULL) {
             return -1;
         }
@@ -49,14 +49,14 @@ int readlines(char *lineptr[], int maxlines) {
 }
 
 // NOTE(brendan): write output lines
-void writelines(char *lineptr[], int nlines) {
+void WriteLines(char *lineptr[], int nlines) {
     while (nlines-- > 0) {
         printf("%s\n", *lineptr++);
     }
 }
 
 // NOTE(brendan): interchange v[i] and v[j]
-void swap(void *v[], int i, int j) {
+void Swap(void *v[], int i, int j) {
     void *temp;
 
     temp = v[i];

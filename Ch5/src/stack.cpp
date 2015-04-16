@@ -44,8 +44,8 @@ int peek(Stack *s) {
 	return err_chk;
 }
 
-// NOTE(brendan): swap top two elements of stack
-int swap(Stack *s) {
+// NOTE(brendan): Swap top two elements of stack
+int Swap(Stack *s) {
 	int temp, err_chk;
 	char temp_kind = ' ';
 	temp = err_chk = 0;

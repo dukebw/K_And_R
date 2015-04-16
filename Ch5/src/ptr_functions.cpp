@@ -12,7 +12,7 @@
 #define MAXLINE 128
 
 // NOTE(brendan): read a line into s; return length
-int getline(char s[], int lim) {
+int GetLine(char s[], int lim) {
 	int c;
 
   char *start = s;

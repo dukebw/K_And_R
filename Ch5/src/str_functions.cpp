@@ -31,8 +31,8 @@ int strlen(char *s) {
     return ((s - sStart) / sizeof(char));
 }
 
-// NOTE(brendan): swap the characters s and t (xor trick)
-void swap(char *s, char *t) {
+// NOTE(brendan): Swap the characters s and t (xor trick)
+void Swap(char *s, char *t) {
     *s ^= *t;
     *t ^= *s;
     *s ^= *t;
@@ -43,7 +43,7 @@ void swap(char *s, char *t) {
 char *reverse(char *s) {
     int sLength = strlen(s);
     for (int i = 0; i < sLength/2; ++i) {
-        swap(s + i, s + (sLength - 1) - i);
+        Swap(s + i, s + (sLength - 1) - i);
     }
     return s;
 }

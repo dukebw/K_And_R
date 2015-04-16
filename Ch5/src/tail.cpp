@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
   int len, lineCount = 0;;
   char *p, line[MAXLEN];
-  while((len = getline(line, MAXLEN)) > 0) {
+  while((len = GetLine(line, MAXLEN)) > 0) {
     p = alloc(len);
     line[len - 1] = '\0';
     strcpy(p, line);

@@ -6,34 +6,31 @@
    Notice: (C) Copyright 2015 by BRD Inc. All Rights Reserved.
    ======================================================================== */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include "util.h" // NOTE(brendan): swap, readlines, writelines
+#include "util.h" // NOTE(brendan): Swap, ReadLines, WriteLines
 
 // NOTE(brendan): max #lines to be sorted
 #define MAXLINES 4096
+#define COMPARE_CHAR_FUNCTION(name) int name(char *, char *)
+typedef COMPARE_CHAR_FUNCTION(compare_char_fn);
+#define COMPARE_VOID_FUNCTION(name) int name(void *, void *)
+typedef COMPARE_VOID_FUNCTION(compare_void_fn);
 
 // NOTE(brendan): pointers to text lines
-char *lineptr[MAXLINES];
-
-int readlines(char *lineptr[], int nlines);
-void writelines(char *lineptr[], int nlines);
-
-static int reverse;
-static int directory;
-static int (*pSortFunction)(char *, char *) = (int (*)(char *, char *))strcmp;
+global_variable char *GlobalLinePointer[MAXLINES];
+global_variable compare_char_fn *GlobalSortFunction = (compare_char_fn *)strcmp;
+// TODO(brendan): make global_options struct?
+global_variable int GlobalReverse = 0;
 
 // NOTE(brendan): compare s1 and s2 numerically
-int numcmp(char *s1, char *s2)
+internal int
+NumComp(char *StringA, char *StringB)
 {
-    double v1 = atof(s1);
-    double v2 = atof(s2);
-    if (v1 < v2) {
+    double ValueA = atof(StringA);
+    double ValueB = atof(StringB);
+    if (ValueA < ValueB) {
         return -1;
     }
-    else if (v1 > v2) {
+    else if (ValueA > ValueB) {
         return 1;
     }
     else {
@@ -43,7 +40,7 @@ int numcmp(char *s1, char *s2)
 
 // NOTE(brendan): increment char pointer past non-space/alpha-numeric
 inline void
-moveToAlphaNumeric(char **s)
+MoveToAlphaNumeric(char **s)
 {
     while (!(isspace(**s) || isalnum(**s)) &&
            (**s != '\0')) {
@@ -51,73 +48,84 @@ moveToAlphaNumeric(char **s)
     }
 }
 
-// NOTE(brendan): reverse of numcmp
-int reverseGFn(char *s1, char *s2)
+// NOTE(brendan): reverse of GlobalSortFunction
+internal int
+ReverseFunction(char *StringA, char *StringB)
 {
-    if (directory) {
-        moveToAlphaNumeric(&s1);
-        moveToAlphaNumeric(&s2);
-    }
-    return reverse ? -pSortFunction(s1, s2) : pSortFunction(s1, s2);
+    return -GlobalSortFunction(StringA, StringB);
+}
+
+// NOTE(brendan): use directory-order version of GlobalSortFunction
+internal int
+DirectorySortFunction(char *StringA, char *StringB)
+{
+    MoveToAlphaNumeric(&StringA);
+    MoveToAlphaNumeric(&StringB);
+    return GlobalReverse ? -GlobalSortFunction(StringA, StringB) :
+                            GlobalSortFunction(StringA, StringB);
 }
 
 // NOTE(brendan): sort v[left]..v[right] into increasing order
-void qsort(void *v[], int left, int right, int (*comp)(void *, void *))
+internal void
+QuickSort(void *v[], int Left, int Right, compare_void_fn *Comp)
 {
-    void swap(void *v[], int, int); 
+    void Swap(void *v[], int, int); 
 
     // NOTE(brendan): do nothing if array contains < 2 elements
-    if (left >= right) {
+    if (Left >= Right) {
         return;
     }
-    swap(v, left, (left + right)/2);
-    int last = left;
-    for (int i = left + 1; i <= right; ++i) {
-        if ((*comp)(v[i], v[left]) < 0) {
-            swap(v, ++last, i);
+    Swap(v, Left, (Left + Right)/2);
+    int Last = Left;
+    for (int Index = Left + 1; Index <= Right; ++Index) {
+        if ((*Comp)(v[Index], v[Left]) < 0) {
+            Swap(v, ++Last, Index);
         }
     }
-    swap(v, left, last);
-    qsort(v, left, last - 1, comp);
-    qsort(v, last + 1, right, comp);
+    Swap(v, Left, Last);
+    QuickSort(v, Left, Last - 1, Comp);
+    QuickSort(v, Last + 1, Right, Comp);
 }
 
 // NOTE(brendan): INPUT: a character. OUTPUT: that character
 // in lower-case if it was in upper case; the input is output otherwise
-char foldCase(char c)
+internal char
+FoldCase(char InputChar)
 {
-    if ((c >= 'A') && (c <= 'Z')) {
-        c += 'a' - 'A';
+    if ((InputChar >= 'A') && (InputChar <= 'Z')) {
+        InputChar += 'a' - 'A';
     }
-    return c;
+    return InputChar;
 }
 
-// NOTE(brendan): compare string cs to string ct;
-// return < 0 if cs < ct, 0 if cs == ct, or > 0 if cs > ct
+// NOTE(brendan): compare string StringA to string StringB;
+// return < 0 if StringA < StringB, 0 if StringA == StringB,
+// or > 0 if StringA > StringB
 // treat upper-case and lower-case letters as equal
-int foldStrcmp(char *cs, char *ct)
+internal int
+FoldStrComp(char *StringA, char *StringB)
 {
     while (true) {
-        char csTemp = foldCase(*cs);
-        char ctTemp = foldCase(*ct);
-        if (csTemp < ctTemp) {
+        char StringATemp = FoldCase(*StringA);
+        char StringBTemp = FoldCase(*StringB);
+        if (StringATemp < StringBTemp) {
             return -1;
         }
-        else if (csTemp > ctTemp) {
+        else if (StringATemp > StringBTemp) {
             return 1;
         }
-        else if (*cs > *ct) {
+        else if (*StringA > *StringB) {
             return 1;
         }
-        else if (*cs < *ct) {
+        else if (*StringA < *StringB) {
             return -1;
         }
-        // NOTE(brendan): *cs == *ct
-        if (*cs == '\0') {
+        // NOTE(brendan): *StringA == *StringB
+        if (*StringA == '\0') {
             return 0;
         }
-        ++cs;
-        ++ct;
+        ++StringA;
+        ++StringB;
     }
     return 0;
 }
@@ -129,54 +137,63 @@ int foldStrcmp(char *cs, char *ct)
 // NOTE(brendan): sort input lines
 int main(int argc, char *argv[])
 {
+    compare_char_fn *SortFunction = GlobalSortFunction;
+
     // NOTE(brendan): number of input lines read
-    int nlines;
+    int LineCount;
 
     // NOTE(brendan): whether to sort numerically or fold
-    int numeric = 0;
-    int fold = 0;
-    for (int argIndex = 1; argIndex < argc; ++argIndex) {
-        char *argString = argv[argIndex];
-        if (*argString != '-') {
+    int Numeric = 0;
+    int Fold = 0;
+    int Directory = 0;
+    for (int ArgIndex = 1; ArgIndex < argc; ++ArgIndex) {
+        char *ArgString = argv[ArgIndex];
+        if (*ArgString != '-') {
             printf("Error! file input not supported yet\n");
             return 2;
         }
-        while (*++argString != '\0') {
-            switch (*argString) {
+        while (*++ArgString != '\0') {
+            switch (*ArgString) {
                 case 'n':
                 {
-                    numeric = 1;
+                    Numeric = 1;
                 }   break;
                 case 'r':
                 {
-                    reverse = 1;
+                    GlobalReverse = 1;
                 }   break;
                 case 'f':
                 {
-                    fold = 1;
+                    Fold = 1;
                 }   break;
                 case 'd':
                 {
-                    directory = 1;
+                    Directory = 1;
                 }   break;
                 default:
                 {
-                    printf("Invalid input -- '%c'\n", *argString);
+                    printf("Invalid input -- '%c'\n", *ArgString);
                     return 2;
                 }
             }
         }
     }
-    if (numeric) {
-        pSortFunction = numcmp;
+    if (Numeric) {
+        GlobalSortFunction = NumComp;
     }
-    if (fold && (pSortFunction == (int (*)(char *, char *))strcmp)) {
-        pSortFunction = foldStrcmp;
+    else if (Fold) {
+        GlobalSortFunction = FoldStrComp;
     }
-    if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-        qsort((void **)lineptr, 0, nlines - 1, 
-              (int (*)(void *, void *))reverseGFn);
-        writelines(lineptr, nlines);
+    if (GlobalReverse) {
+        SortFunction = ReverseFunction;
+    }
+    if (Directory) {
+        SortFunction = DirectorySortFunction;
+    }
+    if ((LineCount = ReadLines(GlobalLinePointer, MAXLINES)) >= 0) {
+        QuickSort((void **)GlobalLinePointer, 0, LineCount - 1,
+                  (compare_void_fn *)SortFunction);
+        WriteLines(GlobalLinePointer, LineCount);
         return 0;
     }
     else {

@@ -21,7 +21,7 @@
 char *lineptr[MAXLINES];
 
 // NOTE(brendan): read a line into s; return length
-int getline(char s[], int lim) {
+int GetLine(char s[], int lim) {
 	int c;
 
   char *start = s;
@@ -38,11 +38,11 @@ int getline(char s[], int lim) {
 char *alloc(int);
 
 //NOTE(brendan): read input lines
-int readlines(char *lineptr[], char lineStorage[], int maxlines) {
+int ReadLines(char *lineptr[], char lineStorage[], int maxlines) {
   int len, nlines = 0;
   char line[MAXLEN];
 
-  while((len = getline(line, MAXLEN)) > 0) {
+  while((len = GetLine(line, MAXLEN)) > 0) {
     if(nlines >= maxlines) {
       return -1;
     }
@@ -58,14 +58,14 @@ int readlines(char *lineptr[], char lineStorage[], int maxlines) {
 }
 
 // NOTE(brendan): write output lines
-void writelines(char *lineptr[], int nlines) {
+void WriteLines(char *lineptr[], int nlines) {
   while(nlines-- > 0) {
     printf("%s\n", *lineptr++);
   }
 }
 
 // NOTE(brendan): interchange v[i] and v[j]
-void swap(char *v[], int i, int j) {
+void Swap(char *v[], int i, int j) {
   char *temp;
 
   temp = v[i];
@@ -79,27 +79,27 @@ void qsort(char *v[], int left, int right) {
   if(left >= right) {
     return;
   }
-  swap(v, left, (left + right)/2);
+  Swap(v, left, (left + right)/2);
   int last = left;
   for(int i = left + 1; i <= right; ++i) {
     if(strcmp(v[i], v[left]) < 0) {
-      swap(v, ++last, i);
+      Swap(v, ++last, i);
     }
   }
-  swap(v, left, last);
+  Swap(v, left, last);
   qsort(v, left, last - 1);
   qsort(v, last + 1, right);
 }
 
 // NOTE(brendan): sort input lines
 int main(int argc, char *argv[]) {
-  // NOTE(brendan): storage for lines to be pass to readlines
+  // NOTE(brendan): storage for lines to be pass to ReadLines
   char lineStorage[MAXCHAR];
   // NOTE(brendan): number of input lines read
   int nlines;
-  if((nlines = readlines(lineptr, lineStorage, MAXLINES)) >= 0) {
+  if((nlines = ReadLines(lineptr, lineStorage, MAXLINES)) >= 0) {
     qsort(lineptr, 0, nlines - 1);
-    writelines(lineptr, nlines);
+    WriteLines(lineptr, nlines);
     return 0;
   }
   else {

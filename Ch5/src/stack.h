@@ -19,8 +19,8 @@ double pop(Stack *s);
 // NOTE(brendan): print top element of stack */
 int peek(Stack *s);
 
-// NOTE(brendan): swap top two elements of stack
-int swap(Stack *s);
+// NOTE(brendan): Swap top two elements of stack
+int Swap(Stack *s);
 
 // NOTE(brendan):  duplicate top element of stack
 int duplicate(Stack *s);

@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
       } break;
       case 'S':
       {
-        check = swap(&exprStack);
+        check = Swap(&exprStack);
       } break;
       case 'C':
       {
