@@ -4,9 +4,9 @@ LDFLAGS=
 
 CC=g++
 
-SOURCES=generic_sort.cpp util.cpp alloc.cpp
+SOURCES=dcl_parser.cpp util.cpp alloc.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=generic_sort
+EXECUTABLE=dcl_parser
 # Build directory
 BUILD = ../build/
 
@@ -36,4 +36,4 @@ spotless:
 	rm -f *.o *~ .*~ $(BUILD)$(EXECUTABLE)
 
 util.o:alloc.h
-generic_sort.o:util.h
+dcl_parser.o:util.h
