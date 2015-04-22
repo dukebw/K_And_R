@@ -11,6 +11,7 @@ EXECUTABLE=dcl_parser
 BUILD = ../build/
 
 all: directories $(SOURCES) $(BUILD)$(EXECUTABLE)
+	 ctags -R .
 
 $(BUILD)$(EXECUTABLE): $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)

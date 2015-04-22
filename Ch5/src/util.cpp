@@ -37,8 +37,7 @@ int ReadLines(char *lineptr[], int maxlines) {
     while ((len = GetLine(line, MAXLEN)) > 0) {
         if (nlines >= maxlines || (p = alloc(len)) == NULL) {
             return -1;
-        }
-        else {
+        } else {
             // NOTE(brendan): delete newline
             line[len - 1] = '\0';
             strcpy(p, line);

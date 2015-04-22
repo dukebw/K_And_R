@@ -18,7 +18,7 @@ enum {
 // ----------------------------------------------------------------------------
 // Forward declarations
 // ----------------------------------------------------------------------------
-internal void dirdcl();
+internal bool32 dirdcl();
 
 // NOTE(brendan): buffer for ungetch
 global_variable char buf[BUFSIZE];
@@ -46,99 +46,149 @@ void ungetch(int c)
 {
     if (bufp >= BUFSIZE) {
         printf("ungetch: too many character\n");
-    }
-    else {
+    } else {
         buf[bufp++] = c;
     }
 }
 
+// NOTE(brendan): INPUT: none. OUTPUT: first char in input stream (stdin?)
+// that is not a space or tab
+inline void
+skipspace(int *c)
+{
+    while (((*c = getch()) == ' ') || (*c == '\t')) {}
+}
+
 // NOTE(brendan): return next token
-internal int gettoken()
+internal int
+gettoken()
 {
     int c;
     char *p = token;
-    while (((c = getch()) == ' ') || (c == '\t'));
+    skipspace(&c);
     if (c == '(') {
-        if ((c = getch()) == ')') {
+        skipspace(&c);
+        if (c == ')') {
             strcpy(token, "()");
             return (tokentype = PARENS);
-        }
-        else {
+        } else {
             ungetch(c);
             return (tokentype = '(');
         }
-    }
-    else if (c == '[') {
-        for (*p++ = c; (*p++ = getch()) != ']';);
+    } else if (c == '[') {
+        // TODO(brendan): check what is inside the brackets
+        for (*p++ = c; (*p++ = getch()) != ']';) {}
         *p = '\0';
         return (tokentype = BRACKETS);
-    }
-    else if (isalpha(c)) {
-        for (*p++ = c; isalnum(c = getch()); *p++ = c);
+    } else if (isalpha(c)) {
+        do {
+            *p++ = c;
+        } while(isalnum(c = getch()) || (c == '_'));
         *p = '\0';
         ungetch(c);
         return (tokentype = NAME);
-    }
-    else {
+    } else {
         return (tokentype = c);
     }
 }
 
 // NOTE(brendan): dcl: parse a declarator
-internal void dcl()
+internal bool32 dcl()
 {
     // NOTE(brendan): count *'s
     int ns;
-    for (ns = 0; gettoken() == '*'; ++ns);
-    dirdcl();
+    for (ns = 0; gettoken() == '*'; ++ns) {}
+    bool32 success = dirdcl();
     while (ns-- > 0) {
         strcat(out, " pointer to");
     }
+    return success;
 }
 
 // NOTE(brendan): dirdcl: parse a direct declarator
-internal void dirdcl()
+internal bool32
+dirdcl()
 {
+    bool32 success = true;
     // NOTE(brendan): ( dcl )
     if (tokentype == '(') {
-        dcl();
+        success = dcl();
         if (tokentype != ')') {
+            success = false;
             printf("error: missing )\n");
         }
-    }
-    // NOTE(brendan): variable name
-    else if (tokentype == NAME) {
+    } else if (tokentype == NAME) {
+        // NOTE(brendan): variable name
         strcpy(name, token);
-    }
-    else {
+    } else {
+        success = false;
         printf("error: expected name or (dcl)\n");
     }
     int type;
-    while ((type = gettoken()) == PARENS || type == BRACKETS) {
+    while (((type = gettoken()) == PARENS) || (type == BRACKETS)) {
         if (type == PARENS) {
             strcat(out, " function returning");
-        }
-        else {
+        } else {
             strcat(out, " array");
             strcat(out, token);
             strcat(out, " of");
         }
     }
+    return success;
 }
 
-// NOTE(brendan): convert declaration to words
 int main(int argc, char **argv)
 {
-    // NOTE(brendan): 1st token on line is the datatype
-    while (gettoken() != EOF) {
-        strcpy(datatype, token);
-        out[0] = '\0';
-        // NOTE(brendan): parse rest of line
-        dcl();
-        if (tokentype != '\n') {
-            printf("syntax error\n");
+    if ((argc > 1) && (tolower(*argv[1]) == 'd')) {
+        // TODO(brendan): make dcl recover from input errors
+        // NOTE(brendan): convert declaration to words
+        // NOTE(brendan): 1st token on line is the datatype
+        while (gettoken() != EOF) {
+            strcpy(datatype, token);
+            // NOTE(brendan): parse rest of line
+            bool32 success = dcl();
+            if (tokentype != '\n') {
+                printf("syntax error\n");
+            }
+            if (success) {
+                printf("%s: %s %s\n", name, out, datatype);
+            }
+            // TODO(brendan): ???
+            tokentype = 0;
+            out[0] = '\0';
+            token[0] = '\0';
         }
-        printf("%s: %s %s\n", name, out, datatype);
+    } else {
+        // NOTE(brendan): undcl: convert word description to declaration
+        int type;
+        char temp[MAXTOKEN];
+        while (gettoken() != EOF) {
+            strcpy(out, token);
+            bool32 gottoken = false;;
+            while ((gottoken && type != '\n') ||
+                   ((type = gettoken()) != '\n')) {
+                if (gottoken) {
+                    gottoken = false;
+                }
+                if (type == PARENS || type == BRACKETS) {
+                    strcat (out, token);
+                } else if (type == '*') {
+                    type = gettoken();
+                    gottoken = true;
+                    if (type == PARENS || type == BRACKETS) {
+                        sprintf(temp, "(*%s)", out);
+                    } else {
+                        sprintf(temp, "*%s", out);
+                    }
+                    strcpy(out, temp);
+                } else if (type == NAME) {
+                    sprintf(temp, "%s %s", token, out);
+                    strcpy(out, temp);
+                } else {
+                    printf("invalid input at %s\n", token);
+                }
+            }
+            printf("%s\n", out);
+        }
     }
-    return 0;
 }
